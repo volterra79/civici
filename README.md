@@ -1,0 +1,2 @@
+# custumeditorplugin
+CustomEditor

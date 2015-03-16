@@ -1,0 +1,11 @@
+<RCC>
+
+    <qresource prefix="" >
+        <file>icons/civ.png</file>
+    </qresource>
+    <qresource prefix="" >
+        <file>icons/civ_t.png</file>
+    </qresource>
+
+
+</RCC>

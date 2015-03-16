@@ -1,0 +1,120 @@
+CASO AUTO INTERSECTION : SCOPRO I PUNTI CHE MI SERVIRANNO PER SPLITTARE LA FEATURE:
+
+
+
+        #s.geometry().intersection(s.geometry()) extract the vertex of intersection
+        #intersection.asMultiPolyline()
+        # 1 - CASO INCROCIO
+
+        #[  INTERSECTION ITSELF RESTITUISCE I PUNTI IN COMUNE E ALTRO
+        #   [(307705,4.29359e+06), (307733,4.29349e+06)],
+        #   [(307733,4.29349e+06), (307781,4.29332e+06)],
+        #   [(307781,4.29332e+06), (308137,4.29349e+06)],
+        #   [(308137,4.29349e+06), (307733,4.29349e+06)],
+        #   [(307733,4.29349e+06), (307662,4.29348e+06)]
+        # ]
+
+        #[  ORIGINAL GEOMETRY
+        #   [(307705,4.29359e+06),
+        #    (307781,4.29332e+06),
+        #    (308137,4.29349e+06),
+        #    (307662,4.29348e+06)]
+
+        #####INDIVIDUARE IL PUNTO DIVERSO
+        ####CREARE NUOVA FEATURES SE ESISTE
+
+        ###2 CASO NON AUTOINCROCIO
+
+        #[  INTERSECTION ITSELF RESTITUISCE I PUNTI IN COMUNE E ALTRO
+        #  [(308085,4.29341e+06), (308219,4.29331e+06)],
+        #  [(308219,4.29331e+06), (308384,4.29335e+06)],
+        #  [(308384,4.29335e+06), (308342,4.29342e+06)],
+        #  [(308342,4.29342e+06), (308213,4.29345e+06)]]
+
+        ####ORIGINAL GEOMETRY
+        #[  (308085,4.29341e+06),
+        #   (308219,4.29331e+06),
+        #   (308384,4.29335e+06),
+        #   (308342,4.29342e+06),
+        #   (308213,4.29345e+06)]
+        ######## COME SI VEDE SONO TUTTI UGUALI
+        #####
+
+
+#########MAKE A MULTIPOLYLINE
+
+ union_geometry = QgsGeometry.unaryUnion(list_of_geometries)
+
+ WHERE intesect_geometry is a list of geometry.
+
+ IMPORTANT: Remember to COPY (QgsGemetry(geometry of the feature)) when before append the geometry to the list
+
+
+   ######DRAW BBOX ########
+
+self.tempRubberBand = QgsRubberBand(self.mapcanvas, True)
+self.tempRubberBand.setWidth(2)
+self.tempRubberBand.setToGeometry(QgsGeometry.fromRect(feat.geometry().buffer(0.10,1).boundingBox()),None)
+
+##############UNDO REDO STACK
+
+layer.beginEditCommand("name of the eDIT COMMAND ")
+
+# ... call layer's editing methods ...
+
+if problem_occurred:
+  layer.destroyEditCommand()
+  return
+
+# ... more editing ...
+
+layer.endEditCommand()
+
+stack = layer.undoStack()
+stack.count() --> number of command in the stack
+command = stack.command(index) --> return a QUndoCommand element che contiene una serie di comandi wrappati
+                                   tra layer.beginEditCommand('Nome') e layer.endEditCommand()
+                                    	QUndoCommand ( QUndoCommand * parent = 0 )
+QUndoCommand ( const QString & text, QUndoCommand * parent = 0 )
+.child ( int index ) --> ritorna un azione che è stata fatta
+.childCount ()  --> ritorna il numero di azioni che sono stati fatti all'interno del comando (add, delete, etc..)
+id ()
+mergeWith ( const QUndoCommand * command )
+redo ()
+setText ( const QString & text )
+text () -- restituisce il testo layer.beginEditCommand('Nome').
+undo ()
+
+SEMBRA CHE OGNI AZIONE IN QGIS SIA WRAPPATA IN UN SINGOLO COMANDO CHIAMATO CON IL NOME DELL'AZIONE (es. cut, add, ect..)
+
+
+#####DIGITALIZATION ######
+
+
+digit = iface.digitizeToolBar()
+digit.actionTriggered.connect(METOTO CHE CATTURA AZIONE RELATIVA) -- NEL NOSTRO CASO CATTURARE ADD FEATURE ACTION
+sel 'azione ha :
+addfeature.iconText()
+u'Add Feature'
+allora è  stata premuta add feature
+
+mapcanvas.mapTool().action().iconText()
+
+
+dir(iface.addtool)
+['__class__', '__delattr__', '__dict__', '__doc__', '__format__', '__getattr__', '__getattribute__', '__hash__', '__init__',
+'__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__',
+'__weakref__', 'action', 'activate', 'activated', 'blockSignals', 'button', 'canvas', 'canvasDoubleClickEvent', 'canvasMoveEvent',
+'canvasPressEvent', 'canvasReleaseEvent', 'childEvent', 'children', 'connect', 'connectNotify', 'customEvent', 'deactivate',
+'deactivated', 'deleteLater', 'destroyed', 'disconnect', 'disconnectNotify', 'dumpObjectInfo', 'dumpObjectTree',
+'dynamicPropertyNames', 'emit', 'event', 'eventFilter', 'findChild', 'findChildren', 'inherits', 'installEventFilter', 'isEditTool',
+'isTransient', 'isWidgetType', 'keyPressEvent', 'keyReleaseEvent', 'killTimer', 'messageDiscarded', 'messageEmitted', 'metaObject',
+'moveToThread', 'objectName', 'parent', 'property', 'pyqtConfigure', 'receivers', 'removeEventFilter', 'renderComplete',
+'searchRadiusMM', 'searchRadiusMU', 'sender', 'senderSignalIndex', 'setAction', 'setButton', 'setCursor', 'setObjectName',
+'setParent', 'setProperty', 'signalsBlocked', 'startTimer', 'staticMetaObject', 'thread', 'timerEvent', 'toCanvasCoordinates',
+'toLayerCoordinates', 'toMapCoordinates', 'toolName', 'tr', 'trUtf8', 'wheelEvent']
+
+
+
+
+['DelayedPopup', 'DrawChildren', 'DrawWindowBackground', 'IgnoreMask', 'InstantPopup', 'MenuButtonPopup', 'PaintDeviceMetric', 'PdmDepth', 'PdmDpiX', 'PdmDpiY', 'PdmHeight', 'PdmHeightMM', 'PdmNumColors', 'PdmPhysicalDpiX', 'PdmPhysicalDpiY', 'PdmWidth', 'PdmWidthMM', 'RenderFlag', 'RenderFlags', 'ToolButtonPopupMode', '__class__', '__delattr__', '__dict__', '__doc__', '__format__', '__getattr__', '__getattribute__', '__hash__', '__init__', '__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'acceptDrops', 'accessibleDescription', 'accessibleName', 'actionEvent', 'actions', 'activateWindow', 'addAction', 'addActions', 'adjustSize', 'animateClick', 'arrowType', 'autoExclusive', 'autoFillBackground', 'autoRaise', 'autoRepeat', 'autoRepeatDelay', 'autoRepeatInterval', 'backgroundRole', 'baseSize', 'blockSignals', 'changeEvent', 'checkStateSet', 'childAt', 'childEvent', 'children', 'childrenRect', 'childrenRegion', 'clearFocus', 'clearMask', 'click', 'clicked', 'close', 'closeEvent', 'colorCount', 'connect', 'connectNotify', 'contentsMargins', 'contentsRect', 'contextMenuEvent', 'contextMenuPolicy', 'create', 'cursor', 'customContextMenuRequested', 'customEvent', 'defaultAction', 'deleteLater', 'depth', 'destroy', 'destroyed', 'devType', 'disconnect', 'disconnectNotify', 'dragEnterEvent', 'dragLeaveEvent', 'dragMoveEvent', 'dropEvent', 'dumpObjectInfo', 'dumpObjectTree', 'dynamicPropertyNames', 'effectiveWinId', 'emit', 'enabledChange', 'ensurePolished', 'enterEvent', 'event', 'eventFilter', 'find', 'findChild', 'findChildren', 'focusInEvent', 'focusNextChild', 'focusNextPrevChild', 'focusOutEvent', 'focusPolicy', 'focusPreviousChild', 'focusProxy', 'focusWidget', 'font', 'fontChange', 'fontInfo', 'fontMetrics', 'foregroundRole', 'frameGeometry', 'frameSize', 'geometry', 'getContentsMargins', 'grabGesture', 'grabKeyboard', 'grabMouse', 'grabShortcut', 'graphicsEffect', 'graphicsProxyWidget', 'group', 'handle', 'hasFocus', 'hasMouseTracking', 'height', 'heightForWidth', 'heightMM', 'hide', 'hideEvent', 'hitButton', 'icon', 'iconSize', 'inherits', 'initStyleOption', 'inputContext', 'inputMethodEvent', 'inputMethodHints', 'inputMethodQuery', 'insertAction', 'insertActions', 'installEventFilter', 'isActiveWindow', 'isAncestorOf', 'isCheckable', 'isChecked', 'isDown', 'isEnabled', 'isEnabledTo', 'isEnabledToTLW', 'isFullScreen', 'isHidden', 'isLeftToRight', 'isMaximized', 'isMinimized', 'isModal', 'isRightToLeft', 'isTopLevel', 'isVisible', 'isVisibleTo', 'isWidgetType', 'isWindow', 'isWindowModified', 'keyPressEvent', 'keyReleaseEvent', 'keyboardGrabber', 'killTimer', 'languageChange', 'layout', 'layoutDirection', 'leaveEvent', 'locale', 'logicalDpiX', 'logicalDpiY', 'lower', 'mapFrom', 'mapFromGlobal', 'mapFromParent', 'mapTo', 'mapToGlobal', 'mapToParent', 'mask', 'maximumHeight', 'maximumSize', 'maximumWidth', 'menu', 'metaObject', 'metric', 'minimumHeight', 'minimumSize', 'minimumSizeHint', 'minimumWidth', 'mouseDoubleClickEvent', 'mouseGrabber', 'mouseMoveEvent', 'mousePressEvent', 'mouseReleaseEvent', 'move', 'moveEvent', 'moveToThread', 'nativeParentWidget', 'nextCheckState', 'nextInFocusChain', 'normalGeometry', 'numColors', 'objectName', 'overrideWindowFlags', 'overrideWindowState', 'paintEngine', 'paintEvent', 'paintingActive', 'palette', 'paletteChange', 'parent', 'parentWidget', 'physicalDpiX', 'physicalDpiY', 'popupMode', 'pos', 'pressed', 'previousInFocusChain', 'property', 'pyqtConfigure', 'raise_', 'receivers', 'rect', 'releaseKeyboard', 'releaseMouse', 'releaseShortcut', 'released', 'removeAction', 'removeEventFilter', 'render', 'repaint', 'resetInputContext', 'resize', 'resizeEvent', 'restoreGeometry', 'saveGeometry', 'scroll', 'sender', 'senderSignalIndex', 'setAcceptDrops', 'setAccessibleDescription', 'setAccessibleName', 'setArrowType', 'setAttribute', 'setAutoExclusive', 'setAutoFillBackground', 'setAutoRaise', 'setAutoRepeat', 'setAutoRepeatDelay', 'setAutoRepeatInterval', 'setBackgroundRole', 'setBaseSize', 'setCheckable', 'setChecked', 'setContentsMargins', 'setContextMenuPolicy', 'setCursor', 'setDefaultAction', 'setDisabled', 'setDown', 'setEnabled', 'setFixedHeight', 'setFixedSize', 'setFixedWidth', 'setFocus', 'setFocusPolicy', 'setFocusProxy', 'setFont', 'setForegroundRole', 'setGeometry', 'setGraphicsEffect', 'setHidden', 'setIcon', 'setIconSize', 'setInputContext', 'setInputMethodHints', 'setLayout', 'setLayoutDirection', 'setLocale', 'setMask', 'setMaximumHeight', 'setMaximumSize', 'setMaximumWidth', 'setMenu', 'setMinimumHeight', 'setMinimumSize', 'setMinimumWidth', 'setMouseTracking', 'setObjectName', 'setPalette', 'setParent', 'setPopupMode', 'setProperty', 'setShortcut', 'setShortcutAutoRepeat', 'setShortcutEnabled', 'setShown', 'setSizeIncrement', 'setSizePolicy', 'setStatusTip', 'setStyle', 'setStyleSheet', 'setTabOrder', 'setText', 'setToolButtonStyle', 'setToolTip', 'setUpdatesEnabled', 'setVisible', 'setWhatsThis', 'setWindowFilePath', 'setWindowFlags', 'setWindowIcon', 'setWindowIconText', 'setWindowModality', 'setWindowModified', 'setWindowOpacity', 'setWindowRole', 'setWindowState', 'setWindowTitle', 'shortcut', 'show', 'showEvent', 'showFullScreen', 'showMaximized', 'showMenu', 'showMinimized', 'showNormal', 'signalsBlocked', 'size', 'sizeHint', 'sizeIncrement', 'sizePolicy', 'stackUnder', 'startTimer', 'staticMetaObject', 'statusTip', 'style', 'styleSheet', 'tabletEvent', 'testAttribute', 'text', 'thread', 'timerEvent', 'toggle', 'toggled', 'toolButtonStyle', 'toolTip', 'topLevelWidget', 'tr', 'trUtf8', 'triggered', 'underMouse', 'ungrabGesture', 'unsetCursor', 'unsetLayoutDirection', 'unsetLocale', 'update', 'updateGeometry', 'updateMicroFocus', 'updatesEnabled', 'visibleRegion', 'whatsThis', 'wheelEvent', 'width', 'widthMM', 'winId', 'window', 'windowActivationChange', 'windowFilePath', 'windowFlags', 'windowIcon', 'windowIconText', 'windowModality', 'windowOpacity', 'windowRole', 'windowState', 'windowTitle', 'windowType', 'x', 'x11Info', 'x11PictureHandle', 'y']
