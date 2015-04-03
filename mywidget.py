@@ -1,12 +1,21 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from qgis.core import QgsRectangle
 
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    def _fromUtf8(s):
+        return s
 
-
-
-
-
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 """
 
@@ -82,51 +91,86 @@ class QLabelClickable(QtGui.QLabel):
 
 
 class MyTable(QTableWidget):
-    def __init__(self, tcolumn, trows, *args):
+    def __init__(self, mapcanvas, tcolumn, trows, *args):
         QTableWidget.__init__(self, *args)
+        self.mapcanvas =  mapcanvas
         self.tcolumn = tcolumn
         self.trows = trows
         self.setmydata()
-        self.name = 'Zoom To Select'
-        # self.resizeColumnsToContents()
-        # self.resizeRowsToContents()
+        self.currentSelectdRow = None
         self.setSelectionBehavior(1)
         self.setSelectionMode(1)
+        self.setSortingEnabled(True)
         self.currentCellChanged.connect(self.rowSelected)
         self.selectedcivico = None
 
+
     def rowSelected(self,cr,pr,cc,pc):
-
-
-        self.selectedcivico = self.item(cr,4).text()
+        try:
+            self.currentSelectdRow = cr
+            self.selectedcivico = self.item(cr,0).text()
+        except:
+            pass
 
     def setmydata(self):
 
         horHeaders = []
 
-        i=0
+
         for n, col in enumerate(self.tcolumn):
             horHeaders.append(col)
-            print(col)
-            for m, item in enumerate(self.trows[i]):
+            for m, item in enumerate(self.trows[n]):
+
                 if item is None:
+
                     newitem = QTableWidgetItem('')
+
                 else:
+
                     newitem = QTableWidgetItem(str(item))
+
                 self.setItem(m, n, newitem)
-            i+=1
+                ##check the geometry ###
+                if self.trows[-1][m] is not None:
+
+                    self.item(m,n).setBackgroundColor(QColor('#f0f0f0'))
+
         self.setHorizontalHeaderLabels(horHeaders)
 
+
     def contextMenuEvent(self, event):
-        menu = QtGui.QMenu(self)
+        index = self.trows[0].index(int(self.selectedcivico))
+        self.geom = self.trows[-1][index]
 
-        Action = menu.addAction("I am a " + self.name + " Action")
-        Action.triggered.connect(self.printName)
+        if self.geom is not None :
+            xy = self.geom.split('POINT(')[1].split(' ')
+            self.x = float(xy[0])
+            self.y = float(xy[1].split(')')[0])
+            menu = QtGui.QMenu(self)
 
-        menu.exec_(event.globalPos())
+            Action = menu.addAction("Pan to feature")
+            Action.triggered.connect(self.panToRowSelected)
 
-    def printName(self):
-        print "Action triggered from " + self.name
+            menu.exec_(event.globalPos())
+
+    def panToRowSelected(self):
+        self.mapcanvas.zoomIn()
+        extent = self.mapcanvas.extent()
+        xmin = self.x - extent.width()
+
+        xmax = self.x + extent.width()
+
+        ymin = self.y - extent.height()
+
+        ymax = self.y + extent.height()
+
+        rect = QgsRectangle( xmin, ymin, xmax, ymax )
+        self.mapcanvas.setExtent(rect)
+        self.mapcanvas.refresh()
+
+        print "Pan to feature " + self.geom
+
+
 class CustomCiviciEditDockWidget(QDockWidget):
 
     def __init__(self, action=None, text="Civici Editor", parent=None):
@@ -173,6 +217,27 @@ class MyStackedWidget(QtGui.QStackedWidget):
 
         return self.widgetTable
 
+
+class WhatSaveFeatureDialog(object):
+    def setupUi(self, dialog):
+        dialog.setObjectName(_fromUtf8("salvailcivico"))
+        dialog.resize(200, 100)
+        layout = QVBoxLayout()
+        self.label = QtGui.QLabel('Vuoi salvare il civico inserito?')
+        self.button_box = QtGui.QDialogButtonBox(dialog)
+        #self.button_box.setGeometry(QtCore.QRect(30, 240, 341, 32))
+        layout.addWidget(self.label)
+        layout.addWidget(self.button_box)
+        self.button_box.setOrientation(QtCore.Qt.Horizontal)
+        self.button_box.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.button_box.setObjectName(_fromUtf8("button_box"))
+        QtCore.QObject.connect(self.button_box, QtCore.SIGNAL(_fromUtf8("accepted()")), dialog.accept)
+        QtCore.QObject.connect(self.button_box, QtCore.SIGNAL(_fromUtf8("rejected()")), dialog.reject)
+        QtCore.QMetaObject.connectSlotsByName(dialog)
+        dialog.setLayout(layout)
+
+    def retranslateUi(self, dialog):
+        dialog.setWindowTitle(_translate("Save Feature", "Civici Editor", None))
 
 
 

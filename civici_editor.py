@@ -30,7 +30,7 @@ from databaseConnection import build_table_from_database_table
 from utils import get_layer_name_from_metadata
 PATH = os.path.dirname(__file__)
 tcolumn, trows, col_num, row_num = build_table_from_database_table()
-
+import sys
 
 class CiviciEditor:
     """QGIS Plugin Implementation."""
@@ -48,11 +48,14 @@ class CiviciEditor:
         self.iface = iface
         self.mapcanvas = iface.mapCanvas()
         self.activeLayer = None
+
         self.selectedcivico = None
         self.projectMainWindow = self.iface.mainWindow()
+        self.savecurrentaddedfeaturedialog = WhatSaveFeatureDialog()
         self.mapregistry = QgsMapLayerRegistry.instance()
         self.mapregistry.layersAdded.connect(self.added_Layer)
-        self.myTable = MyTable(tcolumn, trows, row_num,  col_num)
+        self.iface.initializationCompleted.connect(self.activateAll)
+        self.myTable = MyTable(self.mapcanvas,tcolumn, trows, row_num,  col_num )
         self.customEditorDock = None
         self.scrollArea = QtGui.QScrollArea()
         palette = self.scrollArea.palette()
@@ -85,13 +88,40 @@ class CiviciEditor:
         self.toolbar.setObjectName(u'CiviciEditor')
 
 
+
+
+    def activateAll(self):
+
+        self.iface.setActiveLayer(self.civicilayer)
+        self.tool_editing, self.add_feature_button = self.activeTooggleEdting()
+        self.tool_editing.click()
+        self.add_feature_button.click()
+
+    def activeTooggleEdting(self):
+        tool_editing = None
+        add_feature_button = None
+        self.digitToolBar = self.iface.digitizeToolBar().children()
+        for dT in self.digitToolBar:
+            try:
+                if dT.text() == 'Toggle Editing' or dT.text() == 'Modifica':
+                    tool_editing = dT
+                elif dT.text() == 'Add Feature' or dT.text() == 'Aggiunge elementi':
+                    add_feature_button = dT
+
+            except:
+                pass
+        return tool_editing, add_feature_button
+
+
     def added_Layer(self,layer):
+
         layer = layer[0]
         layer_name = get_layer_name_from_metadata(layer)
         if layer_name == 'civici':
             self.civicilayer = layer
             self.civicoindex = self.civicilayer.fieldNameIndex('codcivico')
             layer.featureAdded.connect(self.setFeatureId)
+            layer.committedFeaturesRemoved.connect(self.committedRemovedFeature)
             layer.undoStack().indexChanged.connect(self.undoStackChanged)
 
     def tr(self, message):
@@ -160,9 +190,8 @@ class CiviciEditor:
 
 
 
-
     def setFeatureId(self,feat_id):
-        print(feat_id)
+        #print(feat_id)
 
         self.feat_id = feat_id
 
@@ -177,14 +206,51 @@ class CiviciEditor:
     def undoStackChanged(self,id):
 
         command = self.civicilayer.undoStack().command(id-1)
-        if command and command.actionText() == 'add feature':
-            if self.myTable.selectedcivico:
-                self.civicilayer.changeAttributeValue(self.feat_id, self.civicoindex, self.myTable.selectedcivico)
-            else:
 
-                self.iface.messageBar().pushMessage("Warning", "Ooops, please select a table row before you add a new feature", level=QgsMessageBar.WARNING)
+        if command:
+            #print(command.actionText())
+            if command.actionText() == 'add feature':
+                if self.myTable.selectedcivico:
+                    self.civicilayer.beginEditCommand('changed code')
+                    self.civicilayer.changeAttributeValue(self.feat_id, self.civicoindex, self.myTable.selectedcivico)
+                    self.civicilayer.endEditCommand()
 
-                self.civicilayer.undoStack().undo()
+                else:
+
+                    self.iface.messageBar().pushMessage("Warning", "Ooops, please select a table row before you add a new feature", level=QgsMessageBar.WARNING)
+
+                    self.civicilayer.undoStack().undo()
+            elif command.actionText() == 'changed code':
+
+                dialog = QtGui.QDialog()
+                ui = WhatSaveFeatureDialog()
+                ui.setupUi(dialog)
+                dialog.show()
+                result = dialog.exec_()
+                if result == 1:
+                        self.civicilayer.commitChanges()
+                        self.tool_editing.click()
+                        self.add_feature_button.click()
+                        self.updateTable()
+
+
+
+    def updateTable(self):
+
+        tcolumn, trows, col_num, row_num = build_table_from_database_table()
+        self.myTable.setRowCount(0)
+        self.myTable.setColumnCount(0)
+        self.myTable.trows = trows
+        self.myTable.setColumnCount(col_num)
+        self.myTable.setRowCount(row_num)
+        self.myTable.setmydata()
+        self.myTable.selectedcivico = None
+        self.myTable.currentSelectdRow = None
+
+
+    def committedRemovedFeature(self,*args,**kargs):
+
+        self.updateTable()
 
 
 
@@ -198,9 +264,7 @@ class CiviciEditor:
 
 
             self.customEditorDock = CustomCiviciEditDockWidget(action=self.action, parent=self.projectMainWindow)
-
             self.customEditorDock.setWidget(self.stackedWidget)
-
 
 
 
