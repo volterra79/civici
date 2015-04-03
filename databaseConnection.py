@@ -54,7 +54,7 @@ def return_row_from_database(connection):
         geom_list = []
         cursor = connection.cursor()
         #query = 'select cod_civ, toponimo, nome_via, cfradesc, civico, barrato, cod_via_ascot, data_ascot, gid_geom	,cod_via_str, ST_AsText(ST_Centroid(geom)) as geom  from test.v_civ_ascot_nongeo order by cod_civ'
-        query = 'select cod_civ, toponimo, data_ascot, ST_AsText(ST_Centroid(geom)) as geom  from test.v_civ_ascot_nongeo order by cod_civ'
+        query = 'select cod_civ, toponimo, data_ascot, ST_AsText(ST_Centroid(geom)) as geom  from test.v_civ_ascot_nongeo order by cod_civ asc'
 
         cursor.execute(query)
         rows = cursor.fetchall()

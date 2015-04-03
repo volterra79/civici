@@ -97,6 +97,7 @@ class MyTable(QTableWidget):
         self.tcolumn = tcolumn
         self.trows = trows
         self.setmydata()
+        self.message = None
         self.currentSelectdRow = None
         self.setSelectionBehavior(1)
         self.setSelectionMode(1)
@@ -107,6 +108,9 @@ class MyTable(QTableWidget):
 
     def rowSelected(self,cr,pr,cc,pc):
         try:
+            if self.message is not None:
+                self.message.close()
+                self.message = None
             self.currentSelectdRow = cr
             self.selectedcivico = self.item(cr,0).text()
         except:
@@ -121,9 +125,9 @@ class MyTable(QTableWidget):
             horHeaders.append(col)
             for m, item in enumerate(self.trows[n]):
 
-                if item is None:
-
-                    newitem = QTableWidgetItem('')
+                if n == 0:
+                    newitem = QTableWidgetItem()
+                    newitem.setData(Qt.EditRole, int(item))
 
                 else:
 
@@ -152,6 +156,9 @@ class MyTable(QTableWidget):
             Action.triggered.connect(self.panToRowSelected)
 
             menu.exec_(event.globalPos())
+
+
+
 
     def panToRowSelected(self):
         self.mapcanvas.zoomIn()
@@ -203,7 +210,7 @@ class MyStackedWidget(QtGui.QStackedWidget):
 
         self.addWidget(self.widgetTable)
         self.setCurrentWidget(self.widgetTable)
-        self.adjustSize()
+
 
         return self.widgetTable
 

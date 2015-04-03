@@ -48,7 +48,8 @@ class CiviciEditor:
         self.iface = iface
         self.mapcanvas = iface.mapCanvas()
         self.activeLayer = None
-
+        self.civicilayer = None
+        self.message = None
         self.selectedcivico = None
         self.projectMainWindow = self.iface.mainWindow()
         self.savecurrentaddedfeaturedialog = WhatSaveFeatureDialog()
@@ -94,8 +95,10 @@ class CiviciEditor:
 
         self.iface.setActiveLayer(self.civicilayer)
         self.tool_editing, self.add_feature_button = self.activeTooggleEdting()
-        self.tool_editing.click()
-        self.add_feature_button.click()
+        if not self.tool_editing.isChecked():
+            self.tool_editing.click()
+        if not self.add_feature_button.isChecked():
+            self.add_feature_button.click()
 
     def activeTooggleEdting(self):
         tool_editing = None
@@ -120,9 +123,7 @@ class CiviciEditor:
         if layer_name == 'civici':
             self.civicilayer = layer
             self.civicoindex = self.civicilayer.fieldNameIndex('codcivico')
-            layer.featureAdded.connect(self.setFeatureId)
-            layer.committedFeaturesRemoved.connect(self.committedRemovedFeature)
-            layer.undoStack().indexChanged.connect(self.undoStackChanged)
+            self.bind_signal_to_civici_layer()
 
     def tr(self, message):
 
@@ -201,7 +202,17 @@ class CiviciEditor:
         self.stackedWidget.removeMyWidget(get_layer_name_from_metadata(self.activeLayer))
 
 
+    def unbind_signal_from_civici_layer(self):
 
+        self.civicilayer.featureAdded.disconnect(self.setFeatureId)
+        self.civicilayer.committedFeaturesRemoved.disconnect(self.committedRemovedFeature)
+        self.civicilayer.undoStack().indexChanged.disconnect(self.undoStackChanged)
+
+    def bind_signal_to_civici_layer(self):
+
+        self.civicilayer.featureAdded.connect(self.setFeatureId)
+        self.civicilayer.committedFeaturesRemoved.connect(self.committedRemovedFeature)
+        self.civicilayer.undoStack().indexChanged.connect(self.undoStackChanged)
 
     def undoStackChanged(self,id):
 
@@ -216,9 +227,9 @@ class CiviciEditor:
                     self.civicilayer.endEditCommand()
 
                 else:
-
-                    self.iface.messageBar().pushMessage("Warning", "Ooops, please select a table row before you add a new feature", level=QgsMessageBar.WARNING)
-
+                    self.message = self.iface.messageBar()
+                    self.message.pushMessage("Warning", "Ooops, please select a table row before you add a new feature", level=QgsMessageBar.WARNING)
+                    self.myTable.message = self.message
                     self.civicilayer.undoStack().undo()
             elif command.actionText() == 'changed code':
 
@@ -254,6 +265,7 @@ class CiviciEditor:
 
 
 
+
     def run(self):
         """Run method that performs all the real work"""
         #self.iface.TEST = self.stackedWidget
@@ -270,6 +282,9 @@ class CiviciEditor:
 
         if self.action.isChecked():
 
+                if self.civicilayer is not None:
+                    self.activateAll()
+                    self.bind_signal_to_civici_layer()
                 self.action.setIcon(QIcon(':icons/civ.png'))
                 self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.customEditorDock)
                 self.openMyWidget()
@@ -279,8 +294,7 @@ class CiviciEditor:
         else:
                 self.action.setIcon(QIcon(':icons/civ_t.png'))
                 self.iface.removeDockWidget(self.customEditorDock)
-
-
+                self.unbind_signal_from_civici_layer()
 
 
 
